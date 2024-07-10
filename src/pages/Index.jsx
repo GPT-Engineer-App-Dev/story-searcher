@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 const fetchTopStories = async () => {
   const response = await fetch(
@@ -25,10 +26,30 @@ const Index = () => {
     queryFn: fetchTopStories,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const storiesPerPage = 10;
 
   const filteredStories = data?.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const indexOfLastStory = currentPage * storiesPerPage;
+  const indexOfFirstStory = indexOfLastStory - storiesPerPage;
+  const currentStories = filteredStories?.slice(indexOfFirstStory, indexOfLastStory);
+
+  const totalPages = Math.ceil((filteredStories?.length || 0) / storiesPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,7 +68,7 @@ const Index = () => {
       )}
       {error && <div className="text-red-500">Failed to load stories.</div>}
       <div className="grid gap-4">
-        {filteredStories?.map((story) => (
+        {currentStories?.map((story) => (
           <Card key={story.id}>
             <CardHeader>
               <CardTitle>{story.title}</CardTitle>
@@ -65,6 +86,17 @@ const Index = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+      <div className="flex justify-between items-center mt-4">
+        <Button onClick={handlePreviousPage} disabled={currentPage === 1}>
+          Previous
+        </Button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages}>
+          Next
+        </Button>
       </div>
     </div>
   );
